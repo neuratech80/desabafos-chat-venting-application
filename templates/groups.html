@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-900">Grupos</h1>
+                <button id="create-group-btn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                    Criar Grupo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Create Group Dialog -->
+    <div id="create-group-dialog" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold mb-4">Criar Novo Grupo</h2>
+                <form id="create-group-form" class="space-y-4">
+                    <div>
+                        <label for="group-name" class="block text-sm font-medium text-gray-700">Nome do Grupo</label>
+                        <input type="text" id="group-name" name="name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="group-image" class="block text-sm font-medium text-gray-700">Imagem do Grupo (opcional)</label>
+                        <input type="file" id="group-image" name="image" accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-create-group"
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                            Criar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups List -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" id="groups-container">
+            {% for group in groups %}
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    {% if group.image_path %}
+                    <img src="{{ url_for('static', filename=group.image_path) }}" alt="{{ group.name }}" class="w-full h-48 object-cover rounded-lg mb-4">
+                    {% endif %}
+                    <h3 class="text-lg font-medium text-gray-900">{{ group.name }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">Criado em {{ group.created_at.strftime("%d/%m/%Y") }}</p>
+                    <div class="mt-4">
+                        <a href="{{ url_for('group_chat', group_id=group.id) }}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                            Entrar no Chat
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dialog = document.getElementById('create-group-dialog');
+    const createBtn = document.getElementById('create-group-btn');
+    const cancelBtn = document.getElementById('cancel-create-group');
+    const form = document.getElementById('create-group-form');
+
+    createBtn.addEventListener('click', () => {
+        dialog.classList.remove('hidden');
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        dialog.classList.add('hidden');
+        form.reset();
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/create_group', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Erro ao criar grupo');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Erro ao criar grupo');
+        }
+    });
+});
+</script>
+{% endblock %}
